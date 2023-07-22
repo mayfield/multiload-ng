@@ -85,7 +85,7 @@ void multiload_config_init()
 			(GraphCmdlineOutputFunc)	multiload_graph_disk_cmdline_output,
 			(GraphGetFilterFunc)		multiload_graph_disk_get_filter
 		},
-		{	"temp",	_("Temperature"),	5,	120,	60,		"°C",
+		{	"temp",	_("Temperature"),	5,	120,	30,		"°C",
 			(GraphInitFunc)				multiload_graph_temp_init,
 			(GraphGetDataFunc)			multiload_graph_temp_get_data,
 			(GraphTooltipUpdateFunc)	multiload_graph_temp_tooltip_update,

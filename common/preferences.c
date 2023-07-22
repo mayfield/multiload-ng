@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <math.h>
 #include <string.h>
+#include <stdbool.h>
 #include <gtk/gtk.h>
 #include <glib/gi18n-lib.h>
 
@@ -70,6 +71,18 @@ static const gchar* spin_ceil_names[GRAPH_MAX] = {
 	"sb_ceil_temp",
 	"",
 	"sb_ceil_parm"
+};
+
+static const gchar* spin_floor_names[GRAPH_MAX] = {
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"sb_floor_temp",
+	"",
+	""
 };
 
 static const gchar* cb_autoscaler_names[GRAPH_MAX] = {
@@ -263,8 +276,11 @@ multiload_preferences_update_dynamic_widgets(MultiloadPlugin *ma)
 
 		// autoscaler
 		if (strcmp(cb_autoscaler_names[i], "") != 0) {
-			gtk_widget_set_sensitive(GTK_WIDGET(OB(spin_ceil_names[i])),
-					!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(OB(cb_autoscaler_names[i]))));
+			int active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(OB(cb_autoscaler_names[i])));
+			gtk_widget_set_sensitive(GTK_WIDGET(OB(spin_ceil_names[i])), !active);
+			if (spin_floor_names[i][0] != '\0') {
+				gtk_widget_set_sensitive(GTK_WIDGET(OB(spin_floor_names[i])), !active);
+			}
 		}
 
 		// filter
@@ -701,9 +717,12 @@ multiload_preferences_autoscaler_toggled_cb (GtkToggleButton *toggle, MultiloadP
 	autoscaler_set_enabled(scaler, enable);
 
 	if (!enable) {
-		// "Automatic" disabled; copy last automatic max to spin button
+		// "Automatic" disabled; copy last automatic values to spin buttons
 		gtk_spin_button_set_value(GTK_SPIN_BUTTON(OB(spin_ceil_names[i])),
 			autoscaler_get_max(scaler, ma->graphs[i], 0));
+		if (spin_floor_names[i][0] != '\0') {
+			gtk_spin_button_set_value(GTK_SPIN_BUTTON(OB(spin_floor_names[i])), scaler->min);
+		}
 	}
 
 	multiload_preferences_update_dynamic_widgets(ma);
@@ -721,8 +740,20 @@ multiload_preferences_ceil_changed_cb (GtkSpinButton *spin, MultiloadPlugin *ma)
 	autoscaler_set_max(scaler, value);
 }
 
+static void
+multiload_preferences_floor_changed_cb (GtkSpinButton *spin, MultiloadPlugin *ma)
+{
+	guint i = multiload_preferences_get_graph_index(GTK_BUILDABLE(spin), spin_floor_names);
+	AutoScaler *scaler = multiload_get_scaler(ma, i);
+	if (scaler == NULL)
+		return;
+
+	int value = gtk_spin_button_get_value_as_int(spin);
+	autoscaler_set_min(scaler, value);
+}
+
 static gint
-multiload_preferences_ceil_input_cb (GtkSpinButton *spin, double *new_value, LoadGraph *g)
+multiload_preferences_input_cb (GtkSpinButton *spin, double *new_value, LoadGraph *g)
 {
 	gchar *format = g_strdup_printf("%%d %s", graph_types[g->id].output_unit);
 	int value;
@@ -741,7 +772,7 @@ multiload_preferences_ceil_input_cb (GtkSpinButton *spin, double *new_value, Loa
 }
 
 static gint
-multiload_preferences_ceil_output_cb (GtkSpinButton *spin, LoadGraph *g)
+multiload_preferences_output_cb (GtkSpinButton *spin, LoadGraph *g)
 {
 	gint n = gtk_spin_button_get_value_as_int(spin);
 	gchar *s = g_strdup_printf("%d %s", n, graph_types[g->id].output_unit);
@@ -1322,9 +1353,14 @@ multiload_preferences_connect_signals (MultiloadPlugin *ma)
 		// autoscaler
 		if (cb_autoscaler_names[i][0] != '\0') {
 			g_signal_connect(G_OBJECT(OB(cb_autoscaler_names[i])), "toggled", G_CALLBACK(multiload_preferences_autoscaler_toggled_cb), ma);
-			g_signal_connect(G_OBJECT(OB(spin_ceil_names[i])), "input", G_CALLBACK(multiload_preferences_ceil_input_cb), ma->graphs[i]);
-			g_signal_connect(G_OBJECT(OB(spin_ceil_names[i])), "output", G_CALLBACK(multiload_preferences_ceil_output_cb), ma->graphs[i]);
+			g_signal_connect(G_OBJECT(OB(spin_ceil_names[i])), "input", G_CALLBACK(multiload_preferences_input_cb), ma->graphs[i]);
+			g_signal_connect(G_OBJECT(OB(spin_ceil_names[i])), "output", G_CALLBACK(multiload_preferences_output_cb), ma->graphs[i]);
 			g_signal_connect(G_OBJECT(OB(spin_ceil_names[i])), "value-changed", G_CALLBACK(multiload_preferences_ceil_changed_cb), ma);
+			if (spin_floor_names[i][0] != '\0') {
+				g_signal_connect(G_OBJECT(OB(spin_floor_names[i])), "input", G_CALLBACK(multiload_preferences_input_cb), ma->graphs[i]);
+				g_signal_connect(G_OBJECT(OB(spin_floor_names[i])), "output", G_CALLBACK(multiload_preferences_output_cb), ma->graphs[i]);
+				g_signal_connect(G_OBJECT(OB(spin_floor_names[i])), "value-changed", G_CALLBACK(multiload_preferences_floor_changed_cb), ma);
+			}
 		}
 
 		// filter
@@ -1462,7 +1498,6 @@ void
 multiload_preferences_fill_dialog (GtkWidget *dialog, MultiloadPlugin *ma)
 {
 	guint i,j;
-	gint tmp;
 	gboolean color_scheme_is_set = FALSE;
 	GraphConfig *conf;
 
@@ -1478,16 +1513,21 @@ multiload_preferences_fill_dialog (GtkWidget *dialog, MultiloadPlugin *ma)
 		gtk_spin_button_set_value(GTK_SPIN_BUTTON(OB(sb_interval_names[i])), conf->interval*1.00);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(OB(cb_visible_names[i])), conf->visible);
 		gtk_entry_set_max_length(GTK_ENTRY(OB(entry_dblclick_command_names[i])), sizeof(conf->dblclick_cmdline));
-		gtk_combo_box_set_active (GTK_COMBO_BOX(OB(combo_tooltip_names[i])), conf->tooltip_style);
-		gtk_combo_box_set_active (GTK_COMBO_BOX(OB(combo_dblclick_names[i])), conf->dblclick_policy);
-		gtk_entry_set_text (GTK_ENTRY(OB(entry_dblclick_command_names[i])), conf->dblclick_cmdline);
+		gtk_combo_box_set_active(GTK_COMBO_BOX(OB(combo_tooltip_names[i])), conf->tooltip_style);
+		gtk_combo_box_set_active(GTK_COMBO_BOX(OB(combo_dblclick_names[i])), conf->dblclick_policy);
+		gtk_entry_set_text(GTK_ENTRY(OB(entry_dblclick_command_names[i])), conf->dblclick_cmdline);
 		gtk_spin_button_set_value(GTK_SPIN_BUTTON(OB(sb_border_names[i])), conf->border_width*1.00);
 
 		// autoscaler
 		if (cb_autoscaler_names[i][0] != '\0') {
-			tmp = multiload_get_max_value(ma, i);
-			gtk_spin_button_set_value(GTK_SPIN_BUTTON(OB(spin_ceil_names[i])), tmp*1.00);
-			gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(OB(cb_autoscaler_names[i])), (tmp<0));
+			gint maxVal = multiload_get_max_value(ma, i);
+			bool automatic = maxVal < 0;
+			gtk_spin_button_set_value(GTK_SPIN_BUTTON(OB(spin_ceil_names[i])), automatic ? -1 : maxVal);
+			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(OB(cb_autoscaler_names[i])), automatic);
+			if (spin_floor_names[i][0] != '\0') {
+				gint minVal = multiload_get_min_value(ma, i);
+				gtk_spin_button_set_value(GTK_SPIN_BUTTON(OB(spin_floor_names[i])), automatic ? -1 : minVal);
+			}
 		}
 
 		// filter

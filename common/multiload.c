@@ -149,7 +149,7 @@ multiload_set_max_value (MultiloadPlugin *ma, guint graph_id, int val)
 }
 
 void
-multiload_set_max_floor (MultiloadPlugin *ma, guint graph_id, int val)
+multiload_set_min_value (MultiloadPlugin *ma, guint graph_id, int val)
 {
 	AutoScaler *scaler = multiload_get_scaler(ma, graph_id);
 	if (scaler == NULL)
@@ -172,6 +172,19 @@ multiload_get_max_value(MultiloadPlugin *ma, guint graph_id)
 		return -1;
 	else
 		return autoscaler_get_max(scaler, NULL, 0);
+}
+
+int
+multiload_get_min_value(MultiloadPlugin *ma, guint graph_id)
+{
+	AutoScaler *scaler = multiload_get_scaler(ma, graph_id);
+	if (scaler == NULL)
+		return -1;
+
+	if (autoscaler_get_enabled(scaler))
+		return -1;
+	else
+		return scaler->min;
 }
 
 gint
@@ -294,7 +307,7 @@ void multiload_defaults(MultiloadPlugin *ma)
 		multiload_colors_default(ma, i);
 
 		multiload_set_max_value(ma, i, graph_types[i].scaler_max);
-		multiload_set_max_floor(ma, i, graph_types[i].scaler_max_floor);
+		multiload_set_min_value(ma, i, graph_types[i].scaler_min);
 	}
 
 	((MemoryData*)ma->extra_data[GRAPH_MEMLOAD])->procps_compliant = TRUE;

@@ -365,11 +365,13 @@ multiload_graph_temp_get_data (int Maximum, int data[2], LoadGraph *g, Temperatu
 	if (max == 0) {
 		memset(data, 0, 2*sizeof(data[0]));
 	} else {
+		int min = xd->scaler.min;
+		int range = max - min;
 		if (use->critical > 0 && use->critical < use->temp) {
-			data[0] = rint (Maximum * (use->critical) / max);
-			data[1] = rint (Maximum * (use->temp - use->critical) / max);
+			data[0] = rint (Maximum * (use->critical - min) / range);
+			data[1] = rint (Maximum * (use->temp - use->critical) / range);
 		} else {
-			data[0] = rint (Maximum * (use->temp) / max);
+			data[0] = rint (Maximum * (use->temp - min) / range);
 			data[1] = 0;
 		}
 	}

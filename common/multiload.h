@@ -153,8 +153,12 @@ G_GNUC_INTERNAL void
 multiload_set_padding (MultiloadPlugin *ma, gint val);
 G_GNUC_INTERNAL void
 multiload_set_max_value (MultiloadPlugin *ma, guint graph_id, int val);
+G_GNUC_INTERNAL void
+multiload_set_min_value (MultiloadPlugin *ma, guint graph_id, int val);
 G_GNUC_INTERNAL int
 multiload_get_max_value (MultiloadPlugin *ma, guint graph_id);
+G_GNUC_INTERNAL int
+multiload_get_min_value (MultiloadPlugin *ma, guint graph_id);
 G_GNUC_INTERNAL gint
 multiload_calculate_size_request (MultiloadPlugin *ma);
 G_GNUC_INTERNAL void

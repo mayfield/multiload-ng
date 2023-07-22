@@ -138,6 +138,13 @@ multiload_ui_read (MultiloadPlugin *ma)
 				multiload_set_max_value(ma, i, scaler_max);
 			g_free (key);
 
+			/* Scaler min */
+			int scaler_min;
+			key = g_strdup_printf("graph-%s-min", graph_types[i].name);
+			if (multiload_ps_settings_get_int (settings, key, &scaler_min))
+				multiload_set_min_value(ma, i, scaler_min);
+			g_free (key);
+
 			/* Filter enable */
 			key = g_strdup_printf("graph-%s-filter-enable", graph_types[i].name);
 			multiload_ps_settings_get_boolean (settings, key, &ma->graph_config[i].filter_enable);
@@ -249,6 +256,13 @@ multiload_ui_save (MultiloadPlugin *ma)
 			key = g_strdup_printf("graph-%s-max", graph_types[i].name);
 			multiload_ps_settings_set_int (settings, key, scaler_max);
 			g_free (key);
+
+			/* Scaler min */
+			int scaler_min = multiload_get_min_value(ma, i);
+			key = g_strdup_printf("graph-%s-min", graph_types[i].name);
+			multiload_ps_settings_set_int (settings, key, scaler_min);
+			g_free (key);
+
 
 			/* Filter enable */
 			key = g_strdup_printf("graph-%s-filter-enable", graph_types[i].name);
