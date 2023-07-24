@@ -73,7 +73,7 @@ systray_preferences_cb(GtkWidget *widget, MultiloadPlugin *ma)
 static void
 systray_popup_menu (GtkStatusIcon *status_icon, guint button, guint activate_time, gpointer user_data)
 {
-	gtk_menu_popup (GTK_MENU(menu), NULL, NULL, NULL, NULL, button, activate_time);
+	gtk_menu_popup_at_pointer (GTK_MENU(menu), NULL);
 }
 
 
