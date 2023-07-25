@@ -197,7 +197,8 @@ multiload_graph_disk_get_data (int Maximum, int data [2], LoadGraph *g, DiskData
 		max = autoscaler_get_max(&xd->scaler, g, readdiff + writediff);
 
 		if (max == 0) {
-			memset(data, 0, 4*sizeof(data[0]));
+			data[0] = 0;
+			data[1] = 0;
 		} else {
 			data[0] = (float)Maximum *  readdiff / (float)max;
 			data[1] = (float)Maximum * writediff / (float)max;

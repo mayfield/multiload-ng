@@ -212,7 +212,9 @@ multiload_graph_bat_init (LoadGraph *g, BatteryData *xd)
 void
 multiload_graph_bat_get_data (int Maximum, int data [3], LoadGraph *g, BatteryData *xd, gboolean first_call)
 {
-	memset(data, 0, 3*sizeof(data[0]));
+	data[0] = 0;
+	data[1] = 0;
+	data[2] = 0;
 
 	bat_info *battery = B(xd);
 

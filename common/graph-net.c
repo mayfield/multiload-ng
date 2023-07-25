@@ -241,7 +241,7 @@ multiload_graph_net_get_data (int Maximum, int data [3], LoadGraph *g, NetData *
 
 		g->filter_changed = FALSE;
 
-		memset(data, 0, NET_MAX * sizeof data[0]);
+		memset(data, 0, 3*sizeof(data[0]));
 	} else {
 		for (i = 0; i < NET_MAX; i++) {
 			delta[i] = present[i] - xd->last[i];
@@ -260,7 +260,7 @@ multiload_graph_net_get_data (int Maximum, int data [3], LoadGraph *g, NetData *
 		xd->local_speed	= calculate_speed(delta[NET_LOCAL],	g->config->interval);
 
 		if (max == 0) {
-			memset(data, 0, 4*sizeof(data[0]));
+			memset(data, 0, 3*sizeof(data[0]));
 		} else {
 			for (i=0; i<NET_MAX; i++)
 				data[i] = rint (Maximum * (float)delta[i] / max);

@@ -117,7 +117,7 @@ typedef struct _ParametricData {
 G_GNUC_INTERNAL void
 multiload_graph_cpu_init (LoadGraph *g, CpuData *xd);
 G_GNUC_INTERNAL void
-multiload_graph_cpu_get_data (int Maximum, int data [5], LoadGraph *g, CpuData *xd, gboolean first_call);
+multiload_graph_cpu_get_data (int Maximum, int data [4], LoadGraph *g, CpuData *xd, gboolean first_call);
 G_GNUC_INTERNAL void
 multiload_graph_cpu_cmdline_output (LoadGraph *g, CpuData *xd);
 G_GNUC_INTERNAL void
@@ -135,14 +135,14 @@ multiload_graph_net_init (LoadGraph *g, NetData *xd);
 G_GNUC_INTERNAL MultiloadFilter *
 multiload_graph_net_get_filter (LoadGraph *g, NetData *xd);
 G_GNUC_INTERNAL void
-multiload_graph_net_get_data (int Maximum, int data [4], LoadGraph *g, NetData *xd, gboolean first_call);
+multiload_graph_net_get_data (int Maximum, int data [3], LoadGraph *g, NetData *xd, gboolean first_call);
 G_GNUC_INTERNAL void
 multiload_graph_net_cmdline_output (LoadGraph *g, NetData *xd);
 G_GNUC_INTERNAL void
 multiload_graph_net_tooltip_update (char *buf_title, size_t len_title, char *buf_text, size_t len_text, LoadGraph *g, NetData *xd, gint style);
 
 G_GNUC_INTERNAL void
-multiload_graph_swap_get_data (int Maximum, int data [2], LoadGraph *g, SwapData *xd, gboolean first_call);
+multiload_graph_swap_get_data (int Maximum, int data [1], LoadGraph *g, SwapData *xd, gboolean first_call);
 G_GNUC_INTERNAL void
 multiload_graph_swap_cmdline_output (LoadGraph *g, SwapData *xd);
 G_GNUC_INTERNAL void
@@ -151,7 +151,7 @@ multiload_graph_swap_tooltip_update (char *buf_title, size_t len_title, char *bu
 G_GNUC_INTERNAL void
 multiload_graph_load_init (LoadGraph *g, LoadData *xd);
 G_GNUC_INTERNAL void
-multiload_graph_load_get_data (int Maximum, int data [2], LoadGraph *g, LoadData *xd, gboolean first_call);
+multiload_graph_load_get_data (int Maximum, int data [1], LoadGraph *g, LoadData *xd, gboolean first_call);
 G_GNUC_INTERNAL void
 multiload_graph_load_cmdline_output (LoadGraph *g, LoadData *xd);
 G_GNUC_INTERNAL void
@@ -160,7 +160,7 @@ multiload_graph_load_tooltip_update (char *buf_title, size_t len_title, char *bu
 G_GNUC_INTERNAL MultiloadFilter *
 multiload_graph_disk_get_filter (LoadGraph *g, DiskData *xd);
 G_GNUC_INTERNAL void
-multiload_graph_disk_get_data (int Maximum, int data [3], LoadGraph *g, DiskData *xd, gboolean first_call);
+multiload_graph_disk_get_data (int Maximum, int data [2], LoadGraph *g, DiskData *xd, gboolean first_call);
 G_GNUC_INTERNAL void
 multiload_graph_disk_cmdline_output (LoadGraph *g, DiskData *xd);
 G_GNUC_INTERNAL void

@@ -76,7 +76,8 @@ multiload_filter_append(MultiloadFilter *filter, char *data)
 	MultiloadFilterElement element;
 	memset(&element, 0, sizeof(element));
 
-	strncpy(element.data, data, sizeof(element.data));
+	strncpy(element.data, data, sizeof(element.data) - 1);
+	element.data[sizeof(element.data) - 1] = '\0';
 	element.state = MULTILOAD_FILTER_STATE_UNSELECTED;
 
 	g_array_append_val(filter->array, element);
@@ -93,7 +94,8 @@ multiload_filter_append_with_label(MultiloadFilter *filter, char *data, char *la
 	guint n = multiload_filter_append(filter, data);
 
 	MultiloadFilterElement *element = multiload_filter_get_element(filter, n);
-	strncpy(element->label, label, sizeof(element->label));
+	strncpy(element->label, label, sizeof(element->label) - 1);
+	element->label[sizeof(element->label) - 1] = '\0';
 	return n;
 }
 

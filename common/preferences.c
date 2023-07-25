@@ -662,12 +662,13 @@ multiload_preferences_color_scheme_selected_cb (GtkTreeSelection *sel, Multiload
 		scheme = &multiload_builtin_color_schemes[ii[0]];
 
 		if (scheme->name[0] == '\0') {
-			strncpy(ma->color_scheme, "-", sizeof(ma->color_scheme));
+			strncpy(ma->color_scheme, "-", sizeof(ma->color_scheme) - 1);
 		} else {
-			strncpy(ma->color_scheme, scheme->name, sizeof(ma->color_scheme));
+			strncpy(ma->color_scheme, scheme->name, sizeof(ma->color_scheme) - 1);
 			multiload_color_scheme_apply(scheme, ma);
 			multiload_preferences_update_color_buttons(ma);
 		}
+		ma->color_scheme[sizeof(ma->color_scheme) - 1] = '\0';
 	}
 
 	g_list_foreach (rows, (GFunc)gtk_tree_path_free, NULL);
@@ -685,7 +686,8 @@ static void
 multiload_preferences_parm_command_changed_cb (GtkEntry *entry, MultiloadPlugin *ma)
 {
 	ParametricData *xd = (ParametricData*)ma->extra_data[GRAPH_PARAMETRIC];
-	strncpy(xd->command, gtk_entry_get_text(entry), sizeof(xd->command));
+	strncpy(xd->command, gtk_entry_get_text(entry), sizeof(xd->command) - 1);
+	xd->command[sizeof(xd->command) - 1] = '\0';
 }
 
 static void
