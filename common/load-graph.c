@@ -190,10 +190,14 @@ load_graph_draw (LoadGraph *g)
 
 	cairo_destroy (cr);
 
-	cr = gdk_cairo_create (gtk_widget_get_window (g->disp));
+	GdkWindow *win = gtk_widget_get_window (g->disp);
+	cairo_region_t *r = cairo_region_create();
+	GdkDrawingContext *win_ctx = gdk_window_begin_draw_frame (win, r);
+	cr = gdk_drawing_context_get_cairo_context (win_ctx);
 	cairo_set_source_surface (cr, g->surface, 0, 0);
 	cairo_paint (cr);
-	cairo_destroy (cr);
+	gdk_window_end_draw_frame (win, win_ctx);
+	cairo_region_destroy (r);
 }
 
 /* Rotates graph data to the right */
