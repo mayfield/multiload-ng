@@ -113,9 +113,10 @@ list_temp_acpitz(TemperatureSourceData **list, gboolean init)
 
 				// remove leading path prefix
 				if (strncmp(buf, "\\_TZ_.", 6) == 0)
-					strncpy(li->name, buf+6, sizeof(li->name));
+					strncpy(li->name, buf+6, sizeof(li->name) - 1);
 				else
-					strncpy(li->name, buf, sizeof(li->name));
+					strncpy(li->name, buf, sizeof(li->name) - 1);
+				li->name[sizeof(li->name) - 1] = '\0';
 			}
 			if (li->name[0] == '\0')
 				g_snprintf(li->name, sizeof(li->name), "thermal_zone%d (ACPI)", i);
@@ -309,7 +310,7 @@ multiload_graph_temp_get_filter (LoadGraph *g, TemperatureData *xd)
 	MultiloadFilter *filter = multiload_filter_new();
 
 	if (list_temp(&list) != TEMP_SOURCE_NO_SUPPORT) {
-		for (i=0; list[i].temp_path[0]!='\0'; i++)
+		for (i=0; list[i].temp_path[0] != '\0'; i++)
 			multiload_filter_append(filter, list[i].name);
 
 		multiload_filter_import_existing(filter, g->config->filter);
@@ -320,7 +321,7 @@ multiload_graph_temp_get_filter (LoadGraph *g, TemperatureData *xd)
 }
 
 void
-multiload_graph_temp_get_data (int Maximum, int data[2], LoadGraph *g, TemperatureData *xd, gboolean first_call)
+multiload_graph_temp_get_data (int Maximum, int data [2], LoadGraph *g, TemperatureData *xd, gboolean first_call)
 {
 	TemperatureSourceData *use = NULL;
 
@@ -343,16 +344,21 @@ multiload_graph_temp_get_data (int Maximum, int data[2], LoadGraph *g, Temperatu
 
 	// select phase: choose which source to show
 	if (g->config->filter_enable && g->config->filter[0] != '\0') {
-		for (i=0; sources_list[i].temp_path[0]!='\0'; i++) {
-			if (strcmp(sources_list[i].name, g->config->filter) == 0) {
+		MultiloadFilter *filter = multiload_filter_new_from_existing(g->config->filter);
+		gchar *name = multiload_filter_get_element_data(filter, 0);
+		for (int i=0; sources_list[i].temp_path[0] != '\0'; i++) {
+			if (strcmp(sources_list[i].name, name) == 0) {
 				use = &sources_list[i];
 				g_debug("[graph-temp] Using source '%s' (selected by filter)", sources_list[i].name);
 				break;
 			}
-			g_debug("[graph-temp] No source found for filter '%s'", g->config->filter);
 		}
+		g_debug("[graph-temp] No source found for filter '%s'", name);
+		multiload_filter_free(filter);
 	}
+
 	if (use == NULL) { // filter disabled or filter value not found - auto selection
+		g_warning("[graph-temp] No temp source specified: using hotest source");
 		for (i=1, m=0; sources_list[i].temp_path[0]!='\0'; i++) {
 			if (sources_list[i].temp > sources_list[m].temp)
 				m = i;
@@ -363,7 +369,8 @@ multiload_graph_temp_get_data (int Maximum, int data[2], LoadGraph *g, Temperatu
 	// output phase
 	int max = autoscaler_get_max(&xd->scaler, g, use->temp);
 	if (max == 0) {
-		memset(data, 0, 2*sizeof(data[0]));
+		data[0] = 0;
+		data[1] = 0;
 	} else {
 		int min = xd->scaler.min;
 		int range = max - min;
