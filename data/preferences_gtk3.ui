@@ -1653,6 +1653,19 @@ Author: Mario cianciolo <mr.udda@gmail.com>
                           </packing>
                         </child>
                         <child>
+                          <object class="GtkColorButton" id="cb_color_mem4">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <property name="relief">none</property>
+                            <property name="use_alpha">True</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">3</property>
+                            <property name="top_attach">4</property>
+                          </packing>
+                        </child>
+                        <child>
                           <object class="GtkLabel" id="label17">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
@@ -1665,6 +1678,18 @@ Author: Mario cianciolo <mr.udda@gmail.com>
                           </packing>
                         </child>
                         <child>
+                          <object class="GtkLabel" id="label17.5">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label" translatable="yes">Shared</property>
+                            <property name="xalign">0</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">4</property>
+                            <property name="top_attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
                           <object class="GtkLabel" id="label18">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
@@ -1672,8 +1697,8 @@ Author: Mario cianciolo <mr.udda@gmail.com>
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">4</property>
-                            <property name="top-attach">2</property>
+                            <property name="left_attach">4</property>
+                            <property name="top_attach">3</property>
                           </packing>
                         </child>
                         <child>
@@ -1684,8 +1709,8 @@ Author: Mario cianciolo <mr.udda@gmail.com>
                             <property name="xalign">0</property>
                           </object>
                           <packing>
-                            <property name="left-attach">4</property>
-                            <property name="top-attach">3</property>
+                            <property name="left_attach">4</property>
+                            <property name="top_attach">4</property>
                           </packing>
                         </child>
                         <child>
@@ -4055,6 +4080,7 @@ Author: Mario cianciolo <mr.udda@gmail.com>
       <widget name="cb_color_mem1"/>
       <widget name="cb_color_mem2"/>
       <widget name="cb_color_mem3"/>
+      <widget name="cb_color_mem4"/>
       <widget name="cb_color_net1"/>
       <widget name="cb_color_net2"/>
       <widget name="cb_color_net3"/>
