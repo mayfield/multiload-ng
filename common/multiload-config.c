@@ -57,7 +57,7 @@ void multiload_config_init()
 			(GraphCmdlineOutputFunc)	multiload_graph_mem_cmdline_output,
 			(GraphGetFilterFunc)		NULL
 		},
-		{	"net",	_("Network"),		6,	-1,		500,	"Bps",
+		{	"net",	_("Network"),		6,	-1,		500,	"mbps",
 			(GraphInitFunc)				multiload_graph_net_init,
 			(GraphGetDataFunc)			multiload_graph_net_get_data,
 			(GraphTooltipUpdateFunc)	multiload_graph_net_tooltip_update,

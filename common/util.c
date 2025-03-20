@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "gtk-compat.h"
 #include "util.h"
@@ -32,7 +33,7 @@
 guint64
 calculate_speed(guint64 delta, guint period_ms)
 {
-	return ( delta * 1000 ) / period_ms;
+	return (guint64) round(delta * 1000.0 / period_ms);
 }
 
 gchar *
@@ -89,7 +90,7 @@ str_replace(const char *string , const char *needle , const char *replacement)
 gchar*
 format_size_for_display(guint64 size, gboolean iec_units)
 {
-	GFormatSizeFlags flags = iec_units ? G_FORMAT_SIZE_IEC_UNITS : G_FORMAT_SIZE_DEFAULT;
+	GFormatSizeFlags flags = G_FORMAT_SIZE_BITS | (iec_units ? G_FORMAT_SIZE_IEC_UNITS : G_FORMAT_SIZE_DEFAULT);
 	return g_format_size_full(size, flags);
 }
 

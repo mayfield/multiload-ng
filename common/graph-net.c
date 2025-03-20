@@ -36,8 +36,8 @@
 
 typedef struct {
 	char name[32];
-	guint64 rx_bytes;
-	guint64 tx_bytes;
+	guint64 rx_bits;
+	guint64 tx_bits;
 
 	gchar path_address[PATH_MAX];
 	char address[40]; // enough for IPv6 addresses
@@ -120,7 +120,7 @@ multiload_graph_net_get_data (int Maximum, int data [3], LoadGraph *g, NetData *
 	FILE *f_net;
 
 	guint64 present[NET_MAX] = { 0, 0, 0 };
-	gint64 delta[NET_MAX];
+	gint64 cur[NET_MAX];
 	gint64 total = 0;
 
 	if_data d;
@@ -140,9 +140,12 @@ multiload_graph_net_get_data (int Maximum, int data [3], LoadGraph *g, NetData *
 		if (strchr(buf, ':') == NULL)
 			continue;
 
-		if (3 != sscanf(buf, "%s %"G_GUINT64_FORMAT" %*u %*u %*u %*u %*u %*u %*u %"G_GUINT64_FORMAT, d.name, &d.rx_bytes, &d.tx_bytes))
+		guint64 rx_bytes, tx_bytes;
+		if (3 != sscanf(buf, "%s %"G_GUINT64_FORMAT" %*u %*u %*u %*u %*u %*u %*u %"G_GUINT64_FORMAT, d.name, &rx_bytes, &tx_bytes))
 			continue; // bad data
 		d.name[strlen(d.name)-1] = '\0'; // remove trailing colon
+		d.rx_bits = rx_bytes * 8;
+		d.tx_bits = tx_bytes * 8;
 
 		// lookup existing data and create it if necessary
 		d_ptr = (if_data*)g_hash_table_lookup(table, d.name);
@@ -161,8 +164,8 @@ multiload_graph_net_get_data (int Maximum, int data [3], LoadGraph *g, NetData *
 			g_hash_table_insert(table, d_ptr->name, d_ptr);
 		}
 
-		d_ptr->rx_bytes = d.rx_bytes;
-		d_ptr->tx_bytes = d.tx_bytes;
+		d_ptr->rx_bits = d.rx_bits;
+		d_ptr->tx_bits = d.tx_bits;
 
 		if (!info_file_read_hex64(d_ptr->path_flags, &d_ptr->flags))
 			continue;
@@ -220,10 +223,10 @@ multiload_graph_net_get_data (int Maximum, int data [3], LoadGraph *g, NetData *
 			continue;
 
 		if (d_ptr->flags & IFF_LOOPBACK) {
-			present[NET_LOCAL] += d_ptr->rx_bytes;
+			present[NET_LOCAL] += d_ptr->rx_bits;
 		} else {
-			present[NET_IN] += d_ptr->rx_bytes;
-			present[NET_OUT] += d_ptr->tx_bytes;
+			present[NET_IN] += d_ptr->rx_bits;
+			present[NET_OUT] += d_ptr->tx_bits;
 		}
 
 		g_strlcat (xd->ifaces, d_ptr->name, sizeof(xd->ifaces));
@@ -244,26 +247,29 @@ multiload_graph_net_get_data (int Maximum, int data [3], LoadGraph *g, NetData *
 		memset(data, 0, 3*sizeof(data[0]));
 	} else {
 		for (i = 0; i < NET_MAX; i++) {
-			delta[i] = present[i] - xd->last[i];
-			if (delta[i] < 0) {
+			cur[i] = calculate_speed(present[i] - xd->last[i], g->config->interval);
+			if (cur[i] < 0) {
 				const char *traffic_names[NET_MAX] = {"input", "output", "local"};
-				g_debug("[graph-net] Measured negative delta for %s traffic. This is a bug, but it is harmless.", traffic_names[i]);
+				g_debug("[graph-net] Measured negative value for %s traffic. This is a bug, but it is harmless.", traffic_names[i]);
 				continue;
 			}
-			total += delta[i];
+			total += cur[i];
 		}
 
-		int max = autoscaler_get_max(&xd->scaler, g, total);
+		// Importantly we need to use mbits to preserve UI rendering of automatic scale values...
+		int max_mbits = autoscaler_get_max(&xd->scaler, g, (guint64) ceil(total / 1000000.0));
 
-		xd->in_speed	= calculate_speed(delta[NET_IN], 	g->config->interval);
-		xd->out_speed	= calculate_speed(delta[NET_OUT],	g->config->interval);
-		xd->local_speed	= calculate_speed(delta[NET_LOCAL],	g->config->interval);
+		xd->in_speed	= cur[NET_IN];
+		xd->out_speed	= cur[NET_OUT];
+		xd->local_speed	= cur[NET_LOCAL];
 
-		if (max == 0) {
+		if (max_mbits == 0) {
 			memset(data, 0, 3*sizeof(data[0]));
 		} else {
-			for (i=0; i<NET_MAX; i++)
-				data[i] = rint (Maximum * (float)delta[i] / max);
+			double max = max_mbits * 1000000.0;
+			for (i=0; i<NET_MAX; i++) {
+				data[i] = rint (Maximum * (cur[i] / max));
+			}
 		}
 	}
 
@@ -283,9 +289,9 @@ multiload_graph_net_cmdline_output (LoadGraph *g, NetData *xd)
 void
 multiload_graph_net_tooltip_update (char *buf_title, size_t len_title, char *buf_text, size_t len_text, LoadGraph *g, NetData *xd, gint style)
 {
-	gchar *tx_in = format_rate_for_display(xd->in_speed, g->multiload->size_format_iec);
-	gchar *tx_out = format_rate_for_display(xd->out_speed, g->multiload->size_format_iec);
-	gchar *tx_local = format_rate_for_display(xd->local_speed, g->multiload->size_format_iec);
+	gchar *tx_in = format_rate_for_display(xd->in_speed, FALSE);
+	gchar *tx_out = format_rate_for_display(xd->out_speed, FALSE);
+	gchar *tx_local = format_rate_for_display(xd->local_speed, FALSE);
 
 	if (style == MULTILOAD_TOOLTIP_STYLE_DETAILED) {
 		g_snprintf(buf_text, len_text, _(	"Monitored interfaces: %s\n"
