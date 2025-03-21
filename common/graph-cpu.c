@@ -68,13 +68,11 @@ multiload_graph_cpu_init (LoadGraph *g, CpuData *xd)
 void
 multiload_graph_cpu_get_data (int Maximum, int data [4], LoadGraph *g, CpuData *xd, gboolean first_call)
 {
-	guint64 irq, softirq, total;
+	guint64 irq, softirq, total, steal, guest, guestnice;
 	guint i;
 
 	guint64 time[CPU_MAX];
 	guint64 diff[CPU_MAX];
-
-	size_t n;
 
 	info_file_read_key_double (PATH_CPUINFO, "cpu MHz", &xd->cpu0_mhz, 1);
 	info_file_read_double (PATH_UPTIME, &xd->uptime, 1);
@@ -86,11 +84,14 @@ multiload_graph_cpu_get_data (int Maximum, int data [4], LoadGraph *g, CpuData *
 
 	// CPU stats
 	FILE *f = info_file_required_fopen(PATH_STAT, "r");
-	n = fscanf(f, "cpu %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT,
-				time+CPU_USER, time+CPU_NICE, time+CPU_SYS, time+CPU_IDLE, time+CPU_IOWAIT, &irq, &softirq);
+	fscanf(f, "cpu %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT
+		" %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT,
+		time+CPU_USER, time+CPU_NICE, time+CPU_SYS, time+CPU_IDLE, time+CPU_IOWAIT, &irq, &softirq,
+		&steal, &guest, &guestnice);
 	fclose(f);
-	g_assert_cmpuint(n, ==, 7);
-	time[CPU_IOWAIT] += irq+softirq;
+	time[CPU_SYS] += irq + softirq + steal;
+	time[CPU_NICE] += guestnice;
+	time[CPU_USER] += guest;
 
 	if (G_LIKELY(!first_call)) { // cannot calculate diff on first call
 		for (i=0, total=0; i<CPU_MAX; i++) {
@@ -98,11 +99,11 @@ multiload_graph_cpu_get_data (int Maximum, int data [4], LoadGraph *g, CpuData *
 			total += diff[i];
 		}
 
-		xd->user			= 100.0 * (float)(diff[CPU_USER]) / total;
-		xd->nice			= 100.0 * (float)(diff[CPU_NICE]) / total;
-		xd->system			= 100.0 * (float)(diff[CPU_SYS]) / total;
-		xd->iowait			= 100.0 * (float)(diff[CPU_IOWAIT]) / total;
-		xd->total_use		= 100.0 * (float)(total-diff[CPU_IDLE]) / total;
+		xd->user	= 100.0 * (float)(diff[CPU_USER]) / total;
+		xd->nice	= 100.0 * (float)(diff[CPU_NICE]) / total;
+		xd->system	= 100.0 * (float)(diff[CPU_SYS]) / total;
+		xd->iowait	= 100.0 * (float)(diff[CPU_IOWAIT]) / total;
+		xd->total_use	= 100.0 * (float)(total - diff[CPU_IDLE] - diff[CPU_IOWAIT]) / total;
 
 		for (i=0; i<4; i++)
 			data[i] = rint (Maximum * (float)diff[i] / total);
